@@ -51,6 +51,7 @@ from conversion_functions import (
     timeseries,
     timeseries_full,
     graph_timestamp_map_table,
+    graph_timestamp_map_kmeans,
     loads_table,
     variable_capacity_factors_table,
     transmission_lines_table,
@@ -244,6 +245,7 @@ def gen_projects_info_file(
             "OffShoreWind_Class1_Moderate_fixed_1": "Wind",
             "Landbased Wind Turbine": "Wind",  ## add by RR because run into an erro of KeyError: 'LandbasedWind_Class1_Moderate_'
             "LandbasedWind_Class1_Moderate": "Wind",  ## add by RR because run into an erro of KeyError: 'LandbasedWind_Class1_Moderate_'
+            "landbasedwind_class3_moderate": "Wind",  ## add by RR
             "Small Hydroelectric": "Water",
             "NaturalGas_CCCCSAvgCF_Conservative": "Naturalgas",
             "NaturalGas_CCAvgCF_Moderate": "Naturalgas",
@@ -684,6 +686,20 @@ def gen_prebuild_newbuild_info_files(
         period_all_gen = pd.concat([existing_gen, period_ng])
         period_all_gen_variability = make_generator_variability(period_all_gen)
         period_all_gen_variability.columns = period_all_gen["Resource"]
+
+        # ####### add by Rangrang, need to discuss further about CF of hydros in MIS_D_MD
+        # change the variability of hyfro generators in MIS_D_MS
+        # the profiles for them were missing and were filled with 1, which does not make sense since
+        # all variable resources should have a variable capacity factoe between 0-1.
+        hydro_variability_new = hydro_variability_new.iloc[:8760]
+        MIS_D_MS_hydro = [
+            col
+            for col in period_all_gen_variability.columns
+            if "MIS_D_MS" in col
+            if "hydro" in col
+        ]
+        for col in MIS_D_MS_hydro:
+            period_all_gen_variability[col] = hydro_variability_new["MIS_D_MS"]
         if settings.get("reduce_time_domain") is True:
             for p in ["time_domain_periods", "time_domain_days_per_period"]:
                 assert p in settings.keys()
@@ -736,6 +752,7 @@ def gen_prebuild_newbuild_info_files(
             dummy_df.insert(0, "LOAD_ZONE", "loadzone")
             dummy_df.insert(2, "zone_demand_mw", 0)
             loads = loads.append(dummy_df)
+            graph_timestamp_map = graph_timestamp_map_kmeans(timepoints_df)
         else:
             if settings.get("full_time_domain") is True:
                 timeseries_df, timepoints_df, timestamp_interval = timeseries_full(
@@ -801,8 +818,8 @@ def gen_prebuild_newbuild_info_files(
             graph_timestamp_map = graph_timestamp_map_table(
                 timeseries_df, timestamp_interval
             )
-            gts_map_list.append(graph_timestamp_map)
 
+        gts_map_list.append(graph_timestamp_map)
         ts_list.append(timeseries_df)
         tp_list.append(timepoints_df)
         htp_list.append(hydro_timepoints_df)
@@ -870,7 +887,10 @@ def other_tables(period_start_list, period_end_list, atb_data_year, out_folder):
     }
     periods_table = pd.DataFrame(periods_data)
     periods_table
-
+    # write switch version txt file
+    file = open(out_folder / "switch_inputs_version.txt", "w")
+    file.write("2.0.6")
+    file.close()
     carbon_policies_table.to_csv(out_folder / "carbon_policies.csv", index=False)
     financials_table.to_csv(out_folder / "financials.csv", index=False)
     periods_table.to_csv(out_folder / "periods.csv", index=False)
@@ -965,7 +985,7 @@ def transmission_tables(settings, out_folder, pg_engine):
     trans_params_table = pd.DataFrame(
         {
             "trans_capital_cost_per_mw_km": trans_capital_cost_per_mw_km,
-            "trans_lifetime_yrs": 20,
+            "trans_lifetime_yrs": 60,
             "trans_fixed_om_fraction": 0.03,
         },
         index=[0],
@@ -1038,8 +1058,9 @@ def main(settings_file: str, results_folder: str):
 
     # load hydro_variability_new, and need to add varibality for region 'MIS_D_MS'
     # by copying values from ' MIS_AR'
-    hydro_variability_new = pd.read_csv(input_folder / settings["hydro_variability_fn"])
-    hydro_variability_new["MIS_D_MS"] = hydro_variability_new["MIS_AR"]
+    hydro_var = pd.read_csv(input_folder / settings["hydro_variability_fn"])
+    hydro_var["MIS_D_MS"] = hydro_var["MIS_AR"].values
+    hydro_variability_new = hydro_var.copy()
 
     # Should switch the case_id/year layers in scenario settings dictionary.
     # Run through the different cases and save files in a new folder for each.
