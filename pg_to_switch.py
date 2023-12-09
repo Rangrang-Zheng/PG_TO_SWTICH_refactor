@@ -1248,8 +1248,8 @@ def balancing_tables(settings, pudl_engine, all_gen, out_folder):
 def main(
     settings_file: str,
     results_folder: str,
-    case_id: Annotated[List[str], typer.Option()] = None,
-    year: Annotated[List[float], typer.Option()] = None,
+    case_id: Annotated[Optional[List[str]], typer.Option()] = None,
+    year: Annotated[Optional[List[float]], typer.Option()] = None,
 ):
     """Create inputs for the Switch model using PowerGenome data
 
@@ -1309,7 +1309,9 @@ def main(
     scenario_definitions = pd.read_csv(
         input_folder / settings["scenario_definitions_fn"]
     )
-    if case_id:
+    if not case_id:
+        case_id = scenario_definitions["case_id"]
+    else:
         scenario_definitions = scenario_definitions.loc[
             scenario_definitions["case_id"].isin(case_id), :
         ]
