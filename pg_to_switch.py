@@ -465,7 +465,8 @@ def gen_projects_info_file(
         columns={"total_capacity": "gen_capacity_limit_mw"}, inplace=True
     )
     gen_project_info = gen_project_info.drop_duplicates(subset="GENERATION_PROJECT")
-    gen_project_info.to_csv(out_folder / "generation_projects_info.csv", index=False)
+    # SWITCH 2.0.7 changes file name from  "generation_projects_info.csv" to "gen_info.csv"
+    gen_project_info.to_csv(out_folder / "gen_info.csv", index=False)
 
 
 def gen_prebuild_newbuild_info_files(
@@ -947,6 +948,15 @@ def gen_prebuild_newbuild_info_files(
     hydro_timeseries_table.to_csv(out_folder / "hydro_timeseries.csv", index=False)
     loads.to_csv(out_folder / "loads.csv", index=False)
     vcf.to_csv(out_folder / "variable_capacity_factors.csv", index=False)
+
+    # SWITCH 2.0.7 changes column names "gen_predetermined_cap", "gen_predetermined_storage_energy_mwh" to
+    #  "build_gen_predetermined", "build_gen_energy_predetermined" in gen_build_predetermined.csv.
+    gen_buildpre = gen_buildpre.rename(
+        columns={
+            "gen_predetermined_cap": "build_gen_predetermined",
+            "gen_predetermined_storage_energy_mwh": "build_gen_energy_predetermined",
+        }
+    )
     gen_buildpre.to_csv(out_folder / "gen_build_predetermined.csv", index=False)
     gen_build_costs.to_csv(out_folder / "gen_build_costs.csv", index=False)
 
@@ -1012,7 +1022,7 @@ def other_tables(
     periods_table
     # write switch version txt file
     file = open(out_folder / "switch_inputs_version.txt", "w")
-    file.write("2.0.6")
+    file.write("2.0.7")
     file.close()
 
     carbon_policies_table.to_csv(out_folder / "carbon_policies.csv", index=False)
@@ -1248,8 +1258,10 @@ def balancing_tables(settings, pudl_engine, all_gen, out_folder):
 def main(
     settings_file: str,
     results_folder: str,
-    case_id: Annotated[Optional[List[str]], typer.Option()] = None,
-    year: Annotated[Optional[List[float]], typer.Option()] = None,
+    # case_id: Annotated[Optional[List[str]], typer.Option()] = None,
+    # year: Annotated[Optional[List[float]], typer.Option()] = None,
+    case_id: List[str] = None,
+    year: List[float] = None,
 ):
     """Create inputs for the Switch model using PowerGenome data
 
@@ -1309,8 +1321,8 @@ def main(
     scenario_definitions = pd.read_csv(
         input_folder / settings["scenario_definitions_fn"]
     )
-    if not case_id:
-        case_id = scenario_definitions["case_id"]
+    if case_id is None:
+        case_id = scenario_definitions.case_id.unique()
     else:
         scenario_definitions = scenario_definitions.loc[
             scenario_definitions["case_id"].isin(case_id), :
