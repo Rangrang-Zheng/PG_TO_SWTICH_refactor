@@ -694,28 +694,46 @@ def gen_prebuild_newbuild_info_files(
     gen_project = gen_build_with_id["GENERATION_PROJECT"].to_list()
     build_yr_plantid_dict = dict(zip(gen_project, build_yr_list))
 
-    gen_build_costs = gen_build_costs_table(gen_buildpre, newgens)
+    ###########################################################
+    # check how to deal with the plants below in other models #
+    ###########################################################
+    # remove plants registered/filed after the first year of model year
+    # otherwise it causes problems in switch post solve
+    gen_buildpre = gen_buildpre.loc[
+        gen_buildpre["build_year"] <= planning_period_start_yrs[0]
+    ]
+    to_remove_cap = (
+        gen_buildpre.loc[gen_buildpre["build_year"] > planning_period_start_yrs[0]]
+        .groupby("GENERATION_PROJECT", as_index=False)
+        .agg(
+            {
+                "GENERATION_PROJECT": "first",
+                "gen_predetermined_cap": "sum",
+            }
+        )
+    )
+    existing_gen["reduce_capacity"] = (
+        existing_gen["Resource"]
+        .map(to_remove_cap.set_index("GENERATION_PROJECT")["gen_predetermined_cap"])
+        .fillna(0)
+    )
+    existing_gen["Existing_Cap_MW"] = (
+        pd.to_numeric(existing_gen["Existing_Cap_MW"], errors="coerce")
+        - existing_gen["reduce_capacity"]
+    )
+    existing_gen = existing_gen[existing_gen["Existing_Cap_MW"] > 0].drop(
+        ["reduce_capacity"], axis=1
+    )
 
-    # gen_build_costs.drop(
-    #     gen_build_costs[gen_build_costs["GENERATION_PROJECT"].isin(retired_ids)].index,
-    #     inplace=True,
-    # )
-    # drop retired plants
-    # gen_buildpre.drop(
-    #     gen_buildpre[gen_buildpre["GENERATION_PROJECT"].isin(retired_ids)].index,
-    #     inplace=True,
-    # )
-
+    gen_build_costs = gen_build_costs_table(settings, gen_buildpre, newgens)
     # Create a complete list of existing and new-build options
+    ## if running an operation model, remove all candidate projects.
+    if settings.get("operation_model") is True:
+        newgens = pd.DataFrame()
     complete_gens = pd.concat([existing_gen, newgens]).drop_duplicates(
         subset=["Resource"]
     )
     complete_gens = add_misc_gen_values(complete_gens, settings)
-    # complete_gens = hydro_energy_to_power(
-    #     complete_gens,
-    #     settings.get("hydro_factor"),
-    #     settings.get("regional_hydro_factor", {}),
-    # )
 
     gen_projects_info_file(
         all_fuel_prices, complete_gens, gc.settings, out_folder, gen_buildpre
@@ -737,6 +755,10 @@ def gen_prebuild_newbuild_info_files(
     for settings, period_lc, period_ng in zip(
         settings_list, periods_dict["load_curves"], periods_dict["new_gen"]
     ):
+        ## if running an operation model, remove all candidate projects.
+        if settings.get("operation_model") is True:
+            period_ng = pd.DataFrame()
+
         period_all_gen = pd.concat([existing_gen, period_ng])
         period_all_gen_variability = make_generator_variability(period_all_gen)
         period_all_gen_variability.columns = period_all_gen["Resource"]
@@ -1118,7 +1140,7 @@ def transmission_tables(settings, out_folder, pg_engine):
                     "capex_mw_mile"
                 ].values()
             )
-            * 1.60934
+            / 1.60934
         )
     else:
         transmission_lines = pd.read_csv(

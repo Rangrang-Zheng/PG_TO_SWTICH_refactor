@@ -453,7 +453,7 @@ def gen_build_predetermined(
     return gen_buildpre, gen_build_with_id
 
 
-def gen_build_costs_table(existing_gen, newgens):
+def gen_build_costs_table(settings, existing_gen, newgens):
     """
     Create gen_build_costs table based off of REAM Scenarior 178.
     Inputs
@@ -532,6 +532,9 @@ def gen_build_costs_table(existing_gen, newgens):
             "gen_storage_energy_fixed_om",
         ]
     ]
+    ## if running an operation model, remove all candidate projects.
+    if settings.get("operation_model") is True:
+        newgens = pd.DataFrame()
 
     gen_build_costs = existing.append(newgens, ignore_index=True)
 
@@ -593,7 +596,10 @@ def generation_projects_info(
     gen_project_info = all_gen.copy().reset_index(drop=True)
     gen_project_info["technology"] = gen_project_info["technology"].str.rstrip("_")
     gen_project_info["GENERATION_PROJECT"] = gen_project_info["Resource"]
-
+    # TODO Change the upstream powergenome code to set up co2_pipeline_capex_mw as 0 when no access to ccs tech
+    # for now, modifyng the translation layer --RR
+    if "co2_pipeline_capex_mw" not in gen_project_info.columns:
+        gen_project_info["co2_pipeline_capex_mw"] = 0
     # get columns for GENERATION_PROJECT, gen_tech, gen_load_zone, gen_full_load_heat_rate, gen_variable_om,
     # gen_connect_cost_per_mw and gen_capacity_limit_mw
     gen_project_info = gen_project_info[
@@ -1732,7 +1738,7 @@ def variable_capacity_factors_table(
     var_cap_fac = var_cap_fac[
         ["GENERATION_PROJECT", "timepoint", "gen_max_capacity_factor"]
     ]
-    searchfor = ["pv", "solar", "wind"]
+    searchfor = ["pv", "solar", "wind", "distribute"]
     var_cap_fac = var_cap_fac[
         var_cap_fac["GENERATION_PROJECT"].str.contains("|".join(searchfor), case=False)
     ]

@@ -476,7 +476,7 @@ settings_management:
     period_years:
       ten:
         model_year: [2030, 2040, 2050]
-        model_first_planning_year: [2023, 2031, 2041]
+        model_first_planning_year: [2026, 2031, 2041]
     existing_clusters:
       thin:
         num_clusters:
@@ -819,7 +819,7 @@ settings_management:
     period_years:
       ten:
         model_year: [2030, 2040, 2050]
-        model_first_planning_year: [2023, 2031, 2041]
+        model_first_planning_year: [2026, 2031, 2041]
     time_reduction:
       none:
         reduce_time_domain: false
@@ -1257,7 +1257,7 @@ settings_management:
     period_years:
       ten:
         model_year: [2030, 2040, 2050]
-        model_first_planning_year: [2023, 2031, 2041]
+        model_first_planning_year: [2026, 2031, 2041]
     time_reduction:
       none:
         reduce_time_domain: false
@@ -1692,7 +1692,7 @@ settings_management:
     period_years:
       ten:
         model_year: [2030, 2040, 2050]
-        model_first_planning_year: [2023, 2031, 2041]
+        model_first_planning_year: [2026, 2031, 2041]
     time_reduction:
       none:
         reduce_time_domain: false
@@ -2130,7 +2130,7 @@ settings_management:
     period_years:
       ten:
         model_year: [2030, 2040, 2050]
-        model_first_planning_year: [2023, 2031, 2041]
+        model_first_planning_year: [2026, 2031, 2041]
     time_reduction:
       none:
         reduce_time_domain: false
@@ -2565,7 +2565,7 @@ settings_management:
     period_years:
       ten:
         model_year: [2030, 2040, 2050]
-        model_first_planning_year: [2023, 2031, 2041]
+        model_first_planning_year: [2026, 2031, 2041]
     time_reduction:
       none:
         reduce_time_domain: false
@@ -5516,6 +5516,7 @@ retirement_ages: # TAYLOR - https://www.nrel.gov/docs/fy22osti/80641.pdf (pdf pa
   NaturalGas_CCAvgCF_Moderate: 40 # carbon capture
   NaturalGas_CTAvgCF_Moderate: 50 # combustion turbine
   Battery_*_Moderate: 15
+  Battery: 15
   NaturalGas_CCS100_Moderate: 40
   UtilityPV_Class1_Moderate_100: 30
   UtilityPV_Class1_Moderate: 30
@@ -6505,7 +6506,7 @@ target_usd_year: 2020
 # model_year: [2025, 2030, 2035, 2040, 2045, 2050]
 # model_first_planning_year: [2023, 2026, 2031, 2036, 2041, 2046]
 model_year: [2030, 2040, 2050]
-model_first_planning_year: [2023, 2031, 2041]
+model_first_planning_year: [2026, 2031, 2041]
 
 
 
