@@ -27,3 +27,6 @@ base_short,2050,none,reference,no,no,none,none,greenfield,10_weeks,yes,ten,none,
 base_short_no_ccs,2030,none,reference,no,no,none,none,greenfield,10_weeks,yes,ten,none,no,standardize_5,no_ramp,base,no
 base_short_no_ccs,2040,none,reference,no,no,none,none,greenfield,10_weeks,yes,ten,none,no,standardize_5,no_ramp,base,no
 base_short_no_ccs,2050,none,reference,no,no,none,none,greenfield,10_weeks,yes,ten,none,no,standardize_5,no_ramp,base,no
+base_short_current_policy,2030,none,reference,no,no,current_policy,none,greenfield,10_weeks,yes,ten,none,no,standardize_5,no_ramp,base,yes
+base_short_current_policy,2040,none,reference,no,no,current_policy,none,greenfield,10_weeks,yes,ten,none,no,standardize_5,no_ramp,base,yes
+base_short_current_policy,2050,none,reference,no,no,current_policy,none,greenfield,10_weeks,yes,ten,none,no,standardize_5,no_ramp,base,yes
